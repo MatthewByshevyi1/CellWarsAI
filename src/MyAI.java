@@ -12,23 +12,32 @@ public class MyAI extends CellAI {
 
     @Override
     public String getAIName() {
-        return "MyAI - CHANGE ME";
+        String name = "LifeStealer";
+        return name;
     }
 
     @Override
     public Location select(Grid grid) {
-        /*
-         * Replace this starter strategy.
-         *
-         * Helpful information:
-         *   getID()                     -> your cell ID
-         *   grid.getRows()              -> number of rows
-         *   grid.getCols()              -> number of columns
-         *   grid.getCell(r, c)          -> -1 if dead, otherwise an AI ID
-         *   GridFunctions.getNeighbors  -> number of living neighbors
-         *   GridFunctions.mostCommonNeighbor -> most common neighboring AI
-         *   randomInt(bound)            -> reproducible random integer
-         */
+        
+
         return new Location(randomInt(grid.getRows()), randomInt(grid.getCols()));
     }
+
+    private String[] destroyStillLife(Grid grid) {
+        
+
+        return new String[0];
+    }
 }
+/*
+    * Replace this starter strategy.
+    *
+    * Helpful information:
+    *   getID()                     -> your cell ID
+    *   grid.getRows()              -> number of rows
+    *   grid.getCols()              -> number of columns
+    *   grid.getCell(r, c)          -> -1 if dead, otherwise an AI ID
+    *   GridFunctions.getNeighbors  -> number of living neighbors
+    *   GridFunctions.mostCommonNeighbor -> most common neighboring AI
+    *   randomInt(bound)            -> reproducible random integer
+    */
