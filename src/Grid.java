@@ -26,4 +26,8 @@ public class Grid {
     public int getCell(int row, int col) {
         return grid[row][col];
     }
+
+    public int[][] getGrid() {
+        return grid;
+    }
 }

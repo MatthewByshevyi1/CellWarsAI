@@ -47,6 +47,10 @@ class MatchEngine {
         populateGrid();
     }
 
+    public Random getRandom() {
+        return random;
+    }
+
     private long mixSeed(long base, int id) {
         long value = base ^ (0x9E3779B97F4A7C15L * (id + 1L));
         value ^= (value >>> 30);
