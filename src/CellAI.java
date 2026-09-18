@@ -51,4 +51,8 @@ public abstract class CellAI {
     final void resetRandom(long seed) {
         random.setSeed(seed);
     }
+    
+    public Random getRandom() {
+        return random;
+    }
 }

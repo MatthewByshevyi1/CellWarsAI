@@ -18,9 +18,21 @@ public class MyAI extends CellAI {
 
     @Override
     public Location select(Grid grid) {
-        
+        int bestScore = Integer.MIN_VALUE;
+        Location bestLocation = null;
 
-        return new Location(randomInt(grid.getRows()), randomInt(grid.getCols()));
+        for (int row = 0; row < grid.getRows(); row++) {
+            for (int col = 0; col < grid.getCols(); col++) {
+                Location loc = new Location(row, col);
+                int score = simulateTurn(grid, loc);
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestLocation = loc;
+                }
+            }
+        }
+
+        return bestLocation != null ? bestLocation : new Location(randomInt(grid.getRows()), randomInt(grid.getCols()));
     }
 
     private int simulateTurn(Grid g, Location l) {
@@ -38,12 +50,12 @@ public class MyAI extends CellAI {
                         next[row][col] = -1;
                     }
                     else {
-                        next[row][col] = GridFunctions.mostCommonNeighbor(row, col, before, random);
+                        next[row][col] = GridFunctions.mostCommonNeighbor(row, col, before, super.getRandom());
                     }
                 }
                 else {
                     if (neighbors == 3) {
-                        next[row][col] = GridFunctions.mostCommonNeighbor(row, col, before, random);
+                        next[row][col] = GridFunctions.mostCommonNeighbor(row, col, before, super.getRandom());
                     }
                     else {
                         next[row][col] = -1;
@@ -52,10 +64,33 @@ public class MyAI extends CellAI {
             }
         }
 
-        return 0;
+        int enemyId = 0;
+        if (super.getID() == 1) {
+            enemyId = 2;
+        }
+        else if (super.getID() == 2) {
+            enemyId = 1;
+        }
+
+        int yourCells = getCellCount(next, super.getID());
+        int enemyCells = getCellCount(next, enemyId);
+
+        return yourCells - enemyCells;
     }
 
-    
+    private int getCellCount(int[][] grid, int id) {
+        int count = 0;
+
+        for (int row = 0; row < grid.length; row++) {
+            for (int col = 0; col < grid[row].length; col++) {
+                if (grid[row][col] == id) {
+                    count++;
+                }
+            }
+        }
+
+        return count;
+    }
 }
 /*
     * Replace this starter strategy.
