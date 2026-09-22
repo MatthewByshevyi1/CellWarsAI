@@ -19,7 +19,7 @@ public final class GridFunctions {
     }
 
     /** Simulator version that uses the match's seeded random generator. */
-    static int mostCommonNeighbor(int row, int col, Grid grid, Random random, boolean engineCall) {
+    static int mostCommonNeighbor(int row, int col, Grid grid, Random random) {
         TreeMap<Integer, Integer> counts = new TreeMap<Integer, Integer>();
 
         for (int r = row - 1; r <= row + 1; r++) {
@@ -54,9 +54,6 @@ public final class GridFunctions {
                 tiedIDs.add(entry.getKey());
             }
         }
-
-        if (engineCall)
-            Randomholder.calls.add(tiedIDs.size());
 
         return tiedIDs.get(random.nextInt(tiedIDs.size()));
     }

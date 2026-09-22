@@ -101,12 +101,12 @@ public class MyAI extends CellAI {
                             next[row][col] = -1;
                         }
                         else {
-                            next[row][col] = GridFunctions.mostCommonNeighbor(row, col, before, random, false);
+                            next[row][col] = GridFunctions.mostCommonNeighbor(row, col, before, random);
                         }
                     }
                     else {
                         if (neighbors == 3) {
-                            next[row][col] = GridFunctions.mostCommonNeighbor(row, col, before, random, false);
+                            next[row][col] = GridFunctions.mostCommonNeighbor(row, col, before, random);
                         }
                         else {
                             next[row][col] = -1;
@@ -137,6 +137,47 @@ public class MyAI extends CellAI {
         }
 
         return count;
+    }
+
+    private int mostCommonNeighbor(int row, int col, Grid grid, Random random) {
+        TreeMap<Integer, Integer> counts = new TreeMap<Integer, Integer>();
+
+        for (int r = row - 1; r <= row + 1; r++) {
+            for (int c = col - 1; c <= col + 1; c++) {
+                if (r == row && c == col) {
+                    continue;
+                }
+
+                if (r >= 0 && c >= 0 && r < grid.getRows() && c < grid.getCols()) {
+                    int id = grid.getCell(r, c);
+                    if (id != -1) {
+                        counts.put(id, counts.getOrDefault(id, 0) + 1);
+                    }
+                }
+            }
+        }
+
+        if (counts.isEmpty()) {
+            return -1;
+        }
+
+        ArrayList<Integer> tiedIDs = new ArrayList<Integer>();
+        int max = -1;
+
+        for (Map.Entry<Integer, Integer> entry : counts.entrySet()) {
+            if (entry.getValue() > max) {
+                max = entry.getValue();
+                tiedIDs.clear();
+                tiedIDs.add(entry.getKey());
+            }
+            else if (entry.getValue() == max) {
+                tiedIDs.add(entry.getKey());
+            }
+        }
+
+        Randomholder.calls.add(tiedIDs.size());
+
+        return tiedIDs.get(random.nextInt(tiedIDs.size()));
     }
 }
 /*
