@@ -33,10 +33,15 @@ class MatchEngine {
         if (orderedPlayers == null || orderedPlayers.size() < 2) {
             throw new IllegalArgumentException("A Cell Wars match needs at least two AIs.");
         }
+        
+        RandomHolder.calls.clear();
 
         this.participants = new ArrayList<CellAI>(orderedPlayers);
         this.activePlayers = new ArrayList<CellAI>(orderedPlayers);
         this.seed = seed;
+
+        RandomHolder.currentSeed = seed;
+
         this.random = new Random(seed);
 
         for (CellAI ai : participants) {
@@ -79,7 +84,9 @@ class MatchEngine {
             int placed = 0;
             while (placed < CellWarsConfig.STARTING_CELLS_PER_AI) {
                 int row = random.nextInt(size);
+                RandomHolder.calls.add(size);
                 int col = random.nextInt(size);
+                RandomHolder.calls.add(size);
 
                 if (grid[row][col] == -1) {
                     grid[row][col] = ai.getID();
@@ -213,12 +220,12 @@ class MatchEngine {
                         next[row][col] = -1;
                     }
                     else {
-                        next[row][col] = GridFunctions.mostCommonNeighbor(row, col, before, random);
+                        next[row][col] = GridFunctions.mostCommonNeighbor(row, col, before, random, true);
                     }
                 }
                 else {
                     if (neighbors == 3) {
-                        next[row][col] = GridFunctions.mostCommonNeighbor(row, col, before, random);
+                        next[row][col] = GridFunctions.mostCommonNeighbor(row, col, before, random, true);
                     }
                     else {
                         next[row][col] = -1;
