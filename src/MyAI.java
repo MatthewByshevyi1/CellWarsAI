@@ -23,40 +23,42 @@ public class MyAI extends CellAI {
 
         for (int row = 0; row < grid.getRows(); row++) {
             for (int col = 0; col < grid.getCols(); col++) {
-                
-                Location my = new Location(row, col);
+                if (isViable(grid.getGrid(), row, col)) {
+                    int score = Integer.MAX_VALUE;
 
-                int score = Integer.MAX_VALUE;
+                    /*for (int r = 0; r < grid.getRows(); r++) {
+                        for (int c = 0; c < grid.getCols(); c++) {
+                            if (isViable(grid.getGrid(), r, c)) {
 
-                for (int r = 0; row < grid.getRows(); r++) {
-                    for (int c = 0; col < grid.getCols(); c++) {
-                        
-                        Location enemy = new Location(r,c);
+                                int oneScore = simulateTurn(grid, row, col, r, c);
 
-                        int oneScore = simulateTurn(grid, my, enemy);
-
-                        if (oneScore < score) {
-                            score = oneScore;
+                                if (oneScore < score) {
+                                    score = oneScore;
+                                }
+                            } else {
+                                continue;
+                            }
                         }
+                    }*/
+
+                    score = simulateTurn(grid, row, col);
+                    
+                    
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestLocation = new Location(row, col);
+                        System.out.println("check");
                     }
-                }
-                
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestLocation = my;
                 }
             }
         }
 
-        return bestLocation != null ? bestLocation : new Location(randomInt(grid.getRows()), randomInt(grid.getCols()));
+        
+
+        return bestLocation;
     }
 
-    private int simulateTurn(Grid g, Location me, Location enemy) {
-        Random random = new Random(RandomHolder.currentSeed);
-        for (Integer i : RandomHolder.calls) {
-            random.nextInt(i);
-        }
-
+    private int simulateTurn(Grid g, int myRow, int myCol/* , int enemyRow, int enemyCol*/) {
         int enemyId = 0;
         if (super.getID() == 1) {
             enemyId = 2;
@@ -74,24 +76,24 @@ public class MyAI extends CellAI {
             }
         }
 
-        if (grid[me.getRow()][me.getCol()] == enemyId || grid[me.getRow()][me.getCol()] == super.getID()) {
-            grid[me.getRow()][me.getCol()] = -1;
+        if (grid[myRow][myCol] == enemyId || grid[myRow][myCol] == super.getID()) {
+            grid[myRow][myCol] = -1;
         } 
-        else if (grid[me.getRow()][me.getCol()] == -1) {
-            grid[me.getRow()][me.getCol()] = super.getID();
+        else if (grid[myRow][myCol] == -1) {
+            grid[myRow][myCol] = super.getID();
         }
 
-        if (grid[enemy.getRow()][enemy.getCol()] == enemyId || grid[enemy.getRow()][enemy.getCol()] == super.getID()) {
-            grid[enemy.getRow()][enemy.getCol()] = -1;
+        /*if (grid[enemyRow][enemyCol] == enemyId || grid[enemyRow][enemyCol] == super.getID()) {
+            grid[enemyRow][enemyCol] = -1;
         } 
-        else if (grid[enemy.getRow()][enemy.getCol()] == -1) {
-            grid[enemy.getRow()][enemy.getCol()] = enemyId;
-        }
+        else if (grid[enemyRow][enemyCol] == -1) {
+            grid[enemyRow][enemyCol] = enemyId;
+        }*/
 
         Grid before = new Grid(grid);
         int[][] next = new int[grid.length][grid[0].length];
 
-        for (int i = 0; i < 2; i++) {
+        //for (int i = 0; i < 2; i++) {
             for (int row = 0; row < grid.length; row++) {
                 for (int col = 0; col < grid[row].length; col++) {
                     int neighbors = GridFunctions.getNeighbors(row, col, before);
@@ -101,12 +103,12 @@ public class MyAI extends CellAI {
                             next[row][col] = -1;
                         }
                         else {
-                            next[row][col] = GridFunctions.mostCommonNeighbor(row, col, before, random);
+                            next[row][col] = GridFunctions.mostCommonNeighbor(row, col, before, super.getRandom());
                         }
                     }
                     else {
                         if (neighbors == 3) {
-                            next[row][col] = GridFunctions.mostCommonNeighbor(row, col, before, random);
+                            next[row][col] = GridFunctions.mostCommonNeighbor(row, col, before, super.getRandom());
                         }
                         else {
                             next[row][col] = -1;
@@ -117,7 +119,7 @@ public class MyAI extends CellAI {
             grid = next;
             before = new Grid(grid);
             next = new int[grid.length][grid[0].length];
-        }
+        //}
 
         int yourCells = getCellCount(grid, super.getID());
         int enemyCells = getCellCount(grid, enemyId);
@@ -139,45 +141,15 @@ public class MyAI extends CellAI {
         return count;
     }
 
-    private int mostCommonNeighbor(int row, int col, Grid grid, Random random) {
-        TreeMap<Integer, Integer> counts = new TreeMap<Integer, Integer>();
-
-        for (int r = row - 1; r <= row + 1; r++) {
-            for (int c = col - 1; c <= col + 1; c++) {
-                if (r == row && c == col) {
-                    continue;
-                }
-
-                if (r >= 0 && c >= 0 && r < grid.getRows() && c < grid.getCols()) {
-                    int id = grid.getCell(r, c);
-                    if (id != -1) {
-                        counts.put(id, counts.getOrDefault(id, 0) + 1);
-                    }
+    private boolean isViable(int[][] grid, int row, int col) {
+        for (int r = Math.max(row-2, 0); r <= Math.min(row+2, grid.length-1); r++) {
+            for (int c = Math.max(col-2, 0); c <= Math.min(col+2, grid[0].length-1); c++) {
+                if (grid[r][c] != -1) {
+                    return true;
                 }
             }
         }
-
-        if (counts.isEmpty()) {
-            return -1;
-        }
-
-        ArrayList<Integer> tiedIDs = new ArrayList<Integer>();
-        int max = -1;
-
-        for (Map.Entry<Integer, Integer> entry : counts.entrySet()) {
-            if (entry.getValue() > max) {
-                max = entry.getValue();
-                tiedIDs.clear();
-                tiedIDs.add(entry.getKey());
-            }
-            else if (entry.getValue() == max) {
-                tiedIDs.add(entry.getKey());
-            }
-        }
-
-        Randomholder.calls.add(tiedIDs.size());
-
-        return tiedIDs.get(random.nextInt(tiedIDs.size()));
+        return false;
     }
 }
 /*
