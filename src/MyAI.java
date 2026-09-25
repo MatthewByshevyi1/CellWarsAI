@@ -20,32 +20,60 @@ public class MyAI extends CellAI {
     public Location select(Grid grid) {
         int bestScore = Integer.MIN_VALUE;
         Location bestLocation = null;
+        int[][] candidateMoves = new int[50][2];
+        double[] candidateScores = new double[50];
 
         for (int row = 0; row < grid.getRows(); row++) {
             for (int col = 0; col < grid.getCols(); col++) {
                 if (isViable(grid.getGrid(), row, col)) {
-                    int score = Integer.MAX_VALUE;
+                    double score = localScore(grid.getGrid(), row, col, super.getID());
 
-                    score = simulateTurn(grid, row, col);
-                    
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestLocation = new Location(row, col);
+                    boolean done = false;
+                    for (int i = 0; i < candidateMoves.length; i++) {
+                        if (candidateScores[i] == 0) {
+                            candidateScores[i] = score;
+                            candidateMoves[i][0] = row;
+                            candidateMoves[i][1] = col;
+                            done = true;
+                            break;
+                        }
+                    }
+
+                    if (!done) {
+                        int lowestIndex = -1;
+                        double lowestScore = Double.MAX_VALUE;
+                        for (int i = 0; i < candidateScores.length; i++) {
+                            if (candidateScores[i] < lowestScore) {
+                                lowestScore = candidateScores[i];
+                                lowestIndex = i;
+                            }
+                        }
+                        if (lowestIndex != -1 && score > lowestScore) {
+                            candidateScores[lowestIndex] = score;
+                            candidateMoves[lowestIndex][0] = row;
+                            candidateMoves[lowestIndex][1] = col;
+                        }
                     }
                 }
             }
         }
 
-        
+        for (int[] move : candidateMoves) {
+            int score = simulateTurn(grid, move[0], move[1]);
+            if (score > bestScore) {
+                bestScore = score;
+                bestLocation = new Location(move[0], move[1]);
+            }
+        }
 
         return bestLocation;
     }
 
-    private int getEnemyID(Grid g) {
+    private int getEnemyID(Grid g, int id) {
         for (int row = 0; row < g.getRows(); row++) {
             for (int col = 0; col < g.getCols(); col++) {
                 int cell = g.getCell(row, col);
-                if (cell != -1 && cell != super.getID()) {
+                if (cell != -1 && cell != id) {
                     return cell;
                 }
             }
@@ -54,7 +82,7 @@ public class MyAI extends CellAI {
     }
 
     private int simulateTurn(Grid g, int myRow, int myCol) {
-        int enemyId = getEnemyID(g);
+        int enemyId = getEnemyID(g, super.getID());
         
         int[][] original = g.getGrid();
         int[][] grid = new int[original.length][original[0].length];
@@ -77,6 +105,9 @@ public class MyAI extends CellAI {
             grid = runGeneration(grid, before);
         }*/
 
+        int yourCells = getCellCount(grid, super.getID());
+        int enemyCells = getCellCount(grid, enemyId);
+
         Grid before = new Grid(grid);
         grid = runGeneration(grid, before);
 
@@ -91,19 +122,22 @@ public class MyAI extends CellAI {
         }
         before = new Grid(grid);
         grid = runGeneration(grid, before);
+        before = new Grid(grid);
+        grid = runGeneration(grid, before);
 
-        int yourCells = getCellCount(grid, super.getID());
+        int myCells = getCellCount(grid, super.getID());
+        int theirCells = getCellCount(grid, enemyId);
 
-        return yourCells;
+        return 2 * (myCells - yourCells) - (theirCells - enemyCells);
     }
 
     private Location getEnemyMove(Grid g, int[][] original) {
-        int enemyId = getEnemyID(g);
+        int enemyId = getEnemyID(g, super.getID());
         int[][] grid = null;
 
         int[][] candidateMoves = new int[5][2];
         double[] candidateScores = new double[5];
-        double moveScore = 0;
+        double moveScore = 1;
 
         int bestRow = -1;
         int bestCol = -1;
@@ -122,11 +156,14 @@ public class MyAI extends CellAI {
                     int neighbors = 0;
                     for (int r = Math.max(row-1, 0); r <= Math.min(row+1, original.length-1); r++) {
                         for (int c = Math.max(col-1, 0); c <= Math.min(col+1, original[0].length-1); c++) {
-                            if (original[r][c] == super.getID()) {
+                            if (r == row && c == col) {
+                                continue;
+                            }
+                            else if (original[r][c] == super.getID()) {
                                 moveScore += 1.5;
                                 neighbors++;
                             }
-                            else if (original[r][c] == getEnemyID(g)) {
+                            else if (original[r][c] == enemyId) {
                                 moveScore++;
                                 neighbors++;
                             }
@@ -157,12 +194,13 @@ public class MyAI extends CellAI {
                                 lowestIndex = i;
                             }
                         }
-                        if (lowestIndex != -1 || moveScore > lowestScore) {
+                        if (lowestIndex != -1 && moveScore > lowestScore) {
                             candidateScores[lowestIndex] = moveScore;
                             candidateMoves[lowestIndex][0] = row;
                             candidateMoves[lowestIndex][1] = col;
                         }
                     }
+                    moveScore = 1;
                 }
             }
         }
@@ -176,6 +214,8 @@ public class MyAI extends CellAI {
                 }
             }
 
+            int cellsBefore = getCellCount(grid, getEnemyID(g, super.getID()));
+
             if (grid[move[0]][move[1]] == enemyId || grid[move[0]][move[1]] == super.getID()) {
                 grid[move[0]][move[1]] = -1;
             } 
@@ -183,12 +223,10 @@ public class MyAI extends CellAI {
                 grid[move[0]][move[1]] = enemyId;
             }
 
-            int cellsBefore = getCellCount(grid, getEnemyID(g));
-
             Grid before = new Grid(grid);
             grid = runGeneration(grid, before);
 
-            int score = getCellCount(grid, getEnemyID(g)) - cellsBefore;
+            int score = getCellCount(grid, getEnemyID(g, super.getID())) - cellsBefore;
                     
             if (score > bestScore) {
                 bestScore = score;
@@ -252,6 +290,105 @@ public class MyAI extends CellAI {
             }
         }
         return false;
+    }
+
+    private double localScore(int[][] grid, int row, int col, int myId) {
+        int enemyId = getEnemyID(new Grid(grid), myId);
+        double score = 0;
+        int initialState = grid[row][col];
+
+        if (grid[row][col] == -1) {
+            grid[row][col] = myId;
+        } else {
+            grid[row][col] = -1;
+        }
+
+        int beforeMyCells = 0;
+        int beforeEnemyCells = 0;
+        for (int r = Math.max(row-2, 0); r <= Math.min(row+2, grid.length-1); r++) {
+            for (int c = Math.max(col-2,0); c <= Math.min(col+2, grid[0].length-1); c++) {
+                if (grid[r][c] == myId) {
+                    beforeMyCells++;
+                } else if (grid[r][c] == enemyId) {
+                    beforeEnemyCells++;
+                }
+            }
+        }
+
+        int[][] next = new int[grid.length][grid[0].length];
+
+        for (int r = Math.max(row-2, 0); r <= Math.min(row+2, grid.length-1); r++) {
+            for (int c = Math.max(col-2,0); c <= Math.min(col+2, grid[0].length-1); c++) {
+                int neighbors = GridFunctions.getNeighbors(r, c, new Grid(grid));
+
+                if (grid[row][col] != -1) {
+                    if (neighbors < 2 || neighbors > 3) {
+                        next[row][col] = -1;
+                    }
+                    else {
+                        next[row][col] = owner(grid, r, c);
+                    }
+                }
+                else {
+                    if (neighbors == 3) {
+                        next[row][col] = owner(grid, r, c);
+                    }
+                    else {
+                        next[row][col] = -1;
+                    }
+                }
+            }
+        }
+
+        int afterMyCells = 0;
+        int afterEnemyCells = 0;
+        for (int r = Math.max(row-2, 0); r <= Math.min(row+2, next.length-1); r++) {
+            for (int c = Math.max(col-2,0); c <= Math.min(col+2, next[0].length-1); c++) {
+                if (next[r][c] == myId) {
+                    afterMyCells++;
+                } else if (next[r][c] == enemyId) {
+                    afterEnemyCells++;
+                }
+            }
+        }
+
+        grid[row][col] = initialState;
+
+        return (afterMyCells - beforeMyCells) - (afterEnemyCells - beforeEnemyCells);
+    }
+
+    private int owner(int[][] grid, int row, int col) {
+        int enemyId = getEnemyID(new Grid(grid), super.getID());
+        int myNeighbors = 0;
+        int enemyNeighbors = 0;
+
+        for (int r = Math.max(row-1, 0); r <= Math.min(row+1, grid.length-1); r++) {
+            for (int c = Math.max(col-1,0); c <= Math.min(col+1, grid[0].length-1); c++) {
+                if (grid[r][c] == super.getID()) {
+                    myNeighbors++;
+                } else if (grid[r][c] == enemyId) {
+                    enemyNeighbors++;
+                }
+            }
+        }
+        
+        if (myNeighbors > enemyNeighbors) {
+            return super.getID();
+        } else if (enemyNeighbors > myNeighbors) {
+            return enemyId;
+        } else {
+            return grid[row][col];
+        }
+    }
+}
+/*
+    * Replace this starter strategy.
+    *
+                } else if (grid[r][c] == enemyId) {
+                    beforeEnemyCells++;
+                }
+            }
+        }
     }
 }
 /*
