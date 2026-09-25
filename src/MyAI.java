@@ -20,8 +20,8 @@ public class MyAI extends CellAI {
     public Location select(Grid grid) {
         int bestScore = Integer.MIN_VALUE;
         Location bestLocation = null;
-        int[][] candidateMoves = new int[50][2];
-        double[] candidateScores = new double[50];
+        int[][] candidateMoves = new int[100][2];
+        double[] candidateScores = new double[100];
 
         for (int row = 0; row < grid.getRows(); row++) {
             for (int col = 0; col < grid.getCols(); col++) {
@@ -128,7 +128,16 @@ public class MyAI extends CellAI {
         int myCells = getCellCount(grid, super.getID());
         int theirCells = getCellCount(grid, enemyId);
 
-        return 2 * (myCells - yourCells) - (theirCells - enemyCells);
+        if (myCells > theirCells * 8) {
+            return (myCells - yourCells) - (theirCells - enemyCells) * 10;
+        }
+        else if (myCells > theirCells * 3) {
+            return (myCells - yourCells) - (theirCells - enemyCells) * 2;
+        }
+        else if (myCells < theirCells) {
+            return (myCells - theirCells) + 30 * (myCells - yourCells) -  5 * (theirCells - enemyCells);
+        }
+        return (myCells - theirCells)  + 30 * (myCells - yourCells) -  10 * (theirCells - enemyCells);
     }
 
     private Location getEnemyMove(Grid g, int[][] original) {
@@ -293,7 +302,8 @@ public class MyAI extends CellAI {
     }
 
     private double localScore(int[][] grid, int row, int col, int myId) {
-        int enemyId = getEnemyID(new Grid(grid), myId);
+        Grid current = new Grid(grid);
+        int enemyId = getEnemyID(current, myId);
         double score = 0;
         int initialState = grid[row][col];
 
@@ -319,22 +329,22 @@ public class MyAI extends CellAI {
 
         for (int r = Math.max(row-2, 0); r <= Math.min(row+2, grid.length-1); r++) {
             for (int c = Math.max(col-2,0); c <= Math.min(col+2, grid[0].length-1); c++) {
-                int neighbors = GridFunctions.getNeighbors(r, c, new Grid(grid));
+                int neighbors = GridFunctions.getNeighbors(r, c, current);
 
-                if (grid[row][col] != -1) {
+                if (grid[r][c] != -1) {
                     if (neighbors < 2 || neighbors > 3) {
-                        next[row][col] = -1;
+                        next[r][c] = -1;
                     }
                     else {
-                        next[row][col] = owner(grid, r, c);
+                        next[r][c] = owner(grid, r, c);
                     }
                 }
                 else {
                     if (neighbors == 3) {
-                        next[row][col] = owner(grid, r, c);
+                        next[r][c] = owner(grid, r, c);
                     }
                     else {
-                        next[row][col] = -1;
+                        next[r][c] = -1;
                     }
                 }
             }
@@ -354,7 +364,7 @@ public class MyAI extends CellAI {
 
         grid[row][col] = initialState;
 
-        return (afterMyCells - beforeMyCells) - (afterEnemyCells - beforeEnemyCells);
+        return 3 * (afterMyCells - beforeMyCells) - (afterEnemyCells - beforeEnemyCells);
     }
 
     private int owner(int[][] grid, int row, int col) {
