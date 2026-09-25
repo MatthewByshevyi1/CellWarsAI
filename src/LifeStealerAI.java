@@ -13,7 +13,7 @@
  * score based on the board situation. This score is then used to compare all 100 moves, and I 
  * choose the one with the best score to return.
  */
-public class MyAI extends CellAI {
+public class LifeStealerAI extends CellAI {
 
     @Override
     public String getAIName() {
