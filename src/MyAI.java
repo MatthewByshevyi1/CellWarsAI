@@ -1,12 +1,17 @@
 /**
  * STUDENT FILE
  *
- * Name: ______________________________
- * AI Code Name: ______________________
+ * Name: Matthew Byshevyi
+ * AI Code Name: LifeStealer
  *
- * Strategy Description:
- * Replace this comment with a short explanation of the strategy your AI uses.
- * Your final strategy must be fundamentally different from the sample AIs.
+ * My AI searches through every viable move of mine (within 2 cells of something living)
+ * then it chooses 100 of those viable moves to test further based on localScore for that
+ * cell, and for each of these 100 cells, it simulates a generation and then runs getEnemyMove()
+ * which returns the best enemy move which is chosen by grading all viable enemy moves on 
+ * a point system, choosing 5 of the best ones and then running a generation for each of them to find the best one, then 
+ * after I get the best enemy move I do it and then run 2 generations, and then calculate the
+ * score based on the board situation. This score is then used to compare all 100 moves, and I 
+ * choose the one with the best score to return.
  */
 public class MyAI extends CellAI {
 
