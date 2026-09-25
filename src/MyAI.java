@@ -101,6 +101,10 @@ public class MyAI extends CellAI {
         int enemyId = getEnemyID(g);
         int[][] grid = null;
 
+        int[][] candidateMoves = new int[5][2];
+        double[] candidateScores = new double[5];
+        double moveScore = 0;
+
         int bestRow = -1;
         int bestCol = -1;
         int bestScore = Integer.MIN_VALUE;
@@ -108,32 +112,88 @@ public class MyAI extends CellAI {
         for (int row = 0; row < original.length; row++) {
             for (int col = 0; col < original[row].length; col++) {
                 if (isViable(original, row, col)) {
-                    grid = new int[original.length][original[0].length];
+                    if (original[row][col] == super.getID()) {
+                        moveScore += 2;
+                    }
+                    else if (original[row][col] == -1) {
+                        moveScore++;
+                    }
 
-                    for (int r = 0; r < original.length; r++) {
-                        for (int c = 0; c < original[r].length; c++) {
-                            grid[r][c] = original[r][c];
+                    int neighbors = 0;
+                    for (int r = Math.max(row-1, 0); r <= Math.min(row+1, original.length-1); r++) {
+                        for (int c = Math.max(col-1, 0); c <= Math.min(col+1, original[0].length-1); c++) {
+                            if (original[r][c] == super.getID()) {
+                                moveScore += 1.5;
+                                neighbors++;
+                            }
+                            else if (original[r][c] == getEnemyID(g)) {
+                                moveScore++;
+                                neighbors++;
+                            }
+                        }
+                    }
+                    
+                    if (neighbors == 3 || neighbors == 2) {
+                        moveScore += 1;
+                    }
+
+                    boolean done = false;
+                    for (int i = 0; i < candidateMoves.length; i++) {
+                        if (candidateScores[i] == 0) {
+                            candidateScores[i] = moveScore;
+                            candidateMoves[i][0] = row;
+                            candidateMoves[i][1] = col;
+                            done = true;
+                            break;
                         }
                     }
 
-                    if (grid[row][col] == enemyId || grid[row][col] == super.getID()) {
-                        grid[row][col] = -1;
-                    } 
-                    else if (grid[row][col] == -1) {
-                        grid[row][col] = enemyId;
-                    }
-
-                    Grid before = new Grid(grid);
-                    grid = runGeneration(grid, before);
-
-                    int score = getCellCount(grid, getEnemyID(g));
-                    
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestRow = row;
-                        bestCol = col;
+                    if (!done) {
+                        int lowestIndex = -1;
+                        double lowestScore = Double.MAX_VALUE;
+                        for (int i = 0; i < candidateScores.length; i++) {
+                            if (candidateScores[i] < lowestScore) {
+                                lowestScore = candidateScores[i];
+                                lowestIndex = i;
+                            }
+                        }
+                        if (lowestIndex != -1 || moveScore > lowestScore) {
+                            candidateScores[lowestIndex] = moveScore;
+                            candidateMoves[lowestIndex][0] = row;
+                            candidateMoves[lowestIndex][1] = col;
+                        }
                     }
                 }
+            }
+        }
+
+        for (int[] move : candidateMoves) {
+            grid = new int[original.length][original[0].length];
+
+            for (int r = 0; r < original.length; r++) {
+                for (int c = 0; c < original[r].length; c++) {
+                    grid[r][c] = original[r][c];
+                }
+            }
+
+            if (grid[move[0]][move[1]] == enemyId || grid[move[0]][move[1]] == super.getID()) {
+                grid[move[0]][move[1]] = -1;
+            } 
+            else if (grid[move[0]][move[1]] == -1) {
+                grid[move[0]][move[1]] = enemyId;
+            }
+
+            int cellsBefore = getCellCount(grid, getEnemyID(g));
+
+            Grid before = new Grid(grid);
+            grid = runGeneration(grid, before);
+
+            int score = getCellCount(grid, getEnemyID(g)) - cellsBefore;
+                    
+            if (score > bestScore) {
+                bestScore = score;
+                bestRow = move[0];
+                bestCol = move[1];
             }
         }
 
